@@ -48,7 +48,7 @@ enum Cmd {
 }
 
 fn main() -> anyhow::Result<()> {
-    dotenv::dotenv()?;
+    load_dotenv();
 
     let args = Args::parse();
 
@@ -67,4 +67,13 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn load_dotenv() {
+    // try to load from $HOME/.config/zou/config
+    if let Some(home_dir) = home::home_dir() {
+        let configrc = home_dir.join(".config").join("zou").join("config");
+        dotenvy::from_path(configrc).ok();
+    }
+    dotenvy::dotenv_override().ok();
 }
