@@ -63,7 +63,7 @@ impl Registry {
         let status = Command::new("ssh")
             .arg(format!("{user}@{host}"))
             .arg(format!(
-                "rm -rf {}; certbot -n delete --cert-name {name}.{host}",
+                "rm -rf {}",
                 path.to_string_lossy()
             ))
             .status()?;
