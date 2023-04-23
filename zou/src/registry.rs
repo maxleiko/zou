@@ -75,6 +75,22 @@ impl Registry {
         println!("✘ deleted \"{name}\"");
         Ok(())
     }
+
+    pub fn list(&self) -> anyhow::Result<()> {
+        let Self { user, host, .. } = self;
+        let path = self.root_dir.to_string_lossy();
+
+        let status = Command::new("ssh")
+            .arg(format!("{user}@{host}"))
+            .arg(format!("ls {path}"))
+            .status()?;
+
+        if !status.success() {
+            bail!("unable to delete");
+        }
+
+        Ok(())
+    }
 }
 
 fn gen_name() -> String {

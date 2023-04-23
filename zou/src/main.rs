@@ -4,17 +4,22 @@ use clap::{Parser, Subcommand};
 use zou::registry::Registry;
 
 #[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
 struct Args {
     #[clap(long, short, help = "Debug mode", default_value = "false")]
     debug: bool,
 
-    #[clap(long, env, help = "SSH user")]
+    #[clap(long, help = "SSH user", env = "ZOU_USER")]
     user: String,
 
-    #[clap(long, env, help = "SSH host")]
+    #[clap(long, help = "SSH host", env = "ZOU_HOST")]
     host: String,
 
-    #[clap(long, env, help = "Path to registry's upload directory")]
+    #[clap(
+        long,
+        help = "Path to registry's upload directory",
+        env = "ZOU_UPLOAD_DIR"
+    )]
     upload_dir: String,
 
     #[clap(subcommand)]
@@ -37,9 +42,14 @@ enum Cmd {
         #[clap(long, short, help = "Name of the project")]
         name: String,
     },
+
+    #[clap(aliases = ["l", "ls"])]
+    List,
 }
 
 fn main() -> anyhow::Result<()> {
+    dotenv::dotenv()?;
+
     let args = Args::parse();
 
     let mut registry = Registry::new(&args.user, &args.host, &args.upload_dir);
@@ -53,6 +63,7 @@ fn main() -> anyhow::Result<()> {
         Some(Cmd::Delete { name }) => {
             registry.delete(&name)?;
         }
+        Some(Cmd::List) => registry.list()?,
     }
 
     Ok(())
