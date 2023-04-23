@@ -30,16 +30,16 @@ struct Args {
 enum Cmd {
     #[clap(aliases = ["p", "pub"])]
     Publish {
-        #[clap(index = 1, help = "Directory to publish")]
+        #[clap(help = "Directory to publish")]
         dir: Option<PathBuf>,
 
-        #[clap(long, short, help = "Name of the project")]
+        #[clap(help = "Optional name of the project")]
         name: Option<String>,
     },
 
     #[clap(aliases = ["d", "rm", "del"])]
     Delete {
-        #[clap(long, short, help = "Name of the project")]
+        #[clap(help = "Name of the project")]
         name: String,
     },
 

@@ -62,10 +62,7 @@ impl Registry {
 
         let status = Command::new("ssh")
             .arg(format!("{user}@{host}"))
-            .arg(format!(
-                "rm -rf {}",
-                path.to_string_lossy()
-            ))
+            .arg(format!("rm -rf {}", path.to_string_lossy()))
             .status()?;
 
         if !status.success() {
