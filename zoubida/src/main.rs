@@ -13,6 +13,7 @@ use axum::{middleware, BoxError, Router};
 use axum_server::tls_rustls::RustlsConfig;
 use clap::{Parser, ValueEnum};
 use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -42,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .fallback(axum::routing::get(get_static_file))
         .layer(middleware::from_fn(most_important_middleware))
+        .layer(TraceLayer::new_for_http())
         .with_state(mode.clone());
 
     match config.https {
