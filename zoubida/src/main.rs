@@ -16,6 +16,39 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+#[derive(Parser, Debug)]
+struct Args {
+    #[clap(short, long, default_value = "4242")]
+    port: u16,
+
+    #[clap(
+        index = 1,
+        help = "Directory to server files from, uses current dir by default"
+    )]
+    dir: Option<PathBuf>,
+
+    #[clap(short, long, help = "Serving mode", default_value = "path", value_enum)]
+    mode: Mode,
+
+    #[clap(long, help = "TLS certificate to use")]
+    tls_cert: Option<PathBuf>,
+
+    #[clap(long, help = "TLS private key to use")]
+    tls_key: Option<PathBuf>,
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+enum Mode {
+    Path,
+    Subdomain,
+}
+
+#[derive(Clone)]
+enum ServeMode {
+    Path(PathBuf),
+    Subdomain(PathBuf),
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_tracing();
@@ -96,12 +129,6 @@ fn init_tracing() {
         .init();
 }
 
-#[derive(Clone)]
-enum ServeMode {
-    Path(PathBuf),
-    Subdomain(PathBuf),
-}
-
 impl TryFrom<Args> for ServeMode {
     type Error = anyhow::Error;
 
@@ -136,20 +163,21 @@ async fn get_static_file(
     Host(host): Host,
     uri: Uri,
     State(mode): State<ServeMode>,
-) -> Result<Response<BoxBody>, (StatusCode, String)> {
+) -> Result<Response<BoxBody>, (StatusCode, &'static str)> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
 
     let dir = match mode {
         ServeMode::Path(root_dir) => root_dir,
-        ServeMode::Subdomain(mut root_dir) => {
-            match subdomain(&host) {
-                Some(subdomain) => {
-                    root_dir.push(subdomain);
-                    root_dir
-                }
-                None => return Err((StatusCode::BAD_REQUEST, "Oops 2!".to_string())),
+        ServeMode::Subdomain(mut subdomain_dir) => match subdomain(&host) {
+            Some(subdomain) => {
+                subdomain_dir.push(subdomain);
+                subdomain_dir
             }
-        }
+            None => {
+                subdomain_dir.push("@");
+                subdomain_dir
+            }
+        },
     };
 
     tracing::trace!("servedir={dir:?}");
@@ -160,39 +188,12 @@ async fn get_static_file(
         .await
     {
         Ok(res) => Ok(res.map(boxed)),
-        Err(_) => Err((StatusCode::BAD_REQUEST, "Oops!".to_string())),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "Oops!")),
     }
 }
 
-#[derive(Parser, Debug)]
-struct Args {
-    #[clap(short, long, default_value = "4242")]
-    port: u16,
-
-    #[clap(
-        index = 1,
-        help = "Directory to server files from, uses current dir by default"
-    )]
-    dir: Option<PathBuf>,
-
-    #[clap(short, long, help = "Serving mode", default_value = "path", value_enum)]
-    mode: Mode,
-
-    #[clap(long, help = "TLS certificate to use")]
-    tls_cert: Option<PathBuf>,
-
-    #[clap(long, help = "TLS private key to use")]
-    tls_key: Option<PathBuf>,
-}
-
-#[derive(ValueEnum, Clone, Debug)]
-enum Mode {
-    Path,
-    Subdomain,
-}
-
 fn subdomain(host: &str) -> Option<&str> {
-    host.rsplitn(3, '.').skip(2).next()
+    host.rsplitn(3, '.').nth(2)
 }
 
 #[test]
