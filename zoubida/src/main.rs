@@ -135,7 +135,7 @@ impl TryFrom<Args> for ServeMode {
     fn try_from(value: Args) -> Result<Self, Self::Error> {
         let dir = value
             .dir
-            .unwrap_or(std::env::current_dir().context("unable to to read current directory")?);
+            .unwrap_or(std::env::current_dir().context("unable to read current directory")?);
 
         if !dir.is_dir() {
             bail!("unable to find directory {:?}", dir);
@@ -153,8 +153,8 @@ impl TryFrom<Args> for ServeMode {
 impl std::fmt::Display for ServeMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ServeMode::Path(m) => write!(f, "serving directory {m:?} in mode PATH",),
-            ServeMode::Subdomain(m) => write!(f, "serving directory {m:?} in mode SUBDOMAIN",),
+            ServeMode::Path(m) => write!(f, "serving directory {m:?} in mode PATH"),
+            ServeMode::Subdomain(m) => write!(f, "serving directory {m:?} in mode SUBDOMAIN"),
         }
     }
 }
@@ -164,7 +164,7 @@ async fn get_static_file(
     uri: Uri,
     State(mode): State<ServeMode>,
 ) -> Result<Response<BoxBody>, (StatusCode, &'static str)> {
-    let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
+    let req = Request::builder().uri(&uri).body(Body::empty()).unwrap();
 
     let dir = match mode {
         ServeMode::Path(root_dir) => root_dir,
@@ -184,6 +184,7 @@ async fn get_static_file(
 
     match ServeDir::new(dir)
         .append_index_html_on_directories(true)
+        // .not_found_service(ServeDir::new("404.html"))
         .try_call(req)
         .await
     {
