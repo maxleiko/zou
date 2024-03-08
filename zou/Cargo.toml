@@ -7,7 +7,5 @@ edition = "2021"
 anyhow = "1.0.70"
 clap = { version = "4.2.4", features = ["derive", "env"] }
 dotenvy = { version = "0.15.7", features = ["clap"] }
-flate2 = "1.0.25"
 home = "0.5.4"
 names = { version = "0.14.0", default-features = false }
-tar = "0.4.38"

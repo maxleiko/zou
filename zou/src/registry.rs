@@ -19,12 +19,7 @@ impl Registry {
         }
     }
 
-    /// Publishes current working dir with an auto-generated name
-    pub fn publish_cwd(&self) -> anyhow::Result<()> {
-        self.publish(None, None)
-    }
-
-    pub fn publish(&self, name: Option<&str>, source: Option<PathBuf>) -> anyhow::Result<()> {
+    pub fn publish(&self, name: Option<&str>, source: Option<PathBuf>) -> anyhow::Result<String> {
         let source = source.unwrap_or(std::env::current_dir()?);
         if !source.exists() || !source.is_dir() {
             bail!("file does not exist or is not a directory");
@@ -40,7 +35,7 @@ impl Registry {
         let target = format!("{user}@{host}:{path}");
 
         let mut rsync = Command::new("rsync");
-        rsync.arg("-zr").arg(source).arg(target);
+        rsync.args(["-zr", "--exclude", ".zou", &source, &target]);
         if self.debug {
             rsync.arg("--progress");
         }
@@ -51,7 +46,7 @@ impl Registry {
         }
 
         println!("✔ http://{name}.{host}", host = self.host);
-        Ok(())
+        Ok(name)
     }
 
     pub fn delete(&self, name: &str) -> anyhow::Result<()> {
