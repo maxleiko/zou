@@ -23,7 +23,7 @@ struct Args {
 
     #[clap(
         index = 1,
-        help = "Directory to server files from, uses current dir by default"
+        help = "Directory to serve files from, uses current dir by default"
     )]
     dir: Option<PathBuf>,
 
