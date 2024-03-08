@@ -1,4 +1,4 @@
-use std::{fs::File, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use zou::registry::Registry;
@@ -62,7 +62,7 @@ fn main() -> anyhow::Result<()> {
         None => {
             let name = std::env::var("ZOU_NAME").ok();
             registry.publish(name.as_deref(), None)?;
-        },
+        }
         Some(Cmd::Publish { dir, name, force }) => {
             if force {
                 if let Some(name) = name.as_deref() {
