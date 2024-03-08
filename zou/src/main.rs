@@ -35,6 +35,9 @@ enum Cmd {
 
         #[clap(help = "Optional name of the project")]
         name: Option<String>,
+
+        #[clap(long, help = "Deletes the previous content before publishing")]
+        force: bool,
     },
 
     #[clap(aliases = ["d", "rm", "del"])]
@@ -57,7 +60,12 @@ fn main() -> anyhow::Result<()> {
 
     match args.cmd {
         None => registry.publish_cwd()?,
-        Some(Cmd::Publish { dir, name }) => {
+        Some(Cmd::Publish { dir, name, force }) => {
+            if force {
+                if let Some(name) = name.as_deref() {
+                    registry.delete(name)?;
+                }
+            }
             registry.publish(name.as_deref(), dir)?;
         }
         Some(Cmd::Delete { name }) => {
